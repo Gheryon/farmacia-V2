@@ -11,7 +11,7 @@ $(document).ready(function(){
 
   async function login(dni, pass){
     let funcion="login";
-    let data=await fetch('/farmaciaV2/Controllers/usuarioController.php',{
+    let data=await fetch('/farmacia-V2/Controllers/usuarioController.php',{
       method: 'POST',
       headers: {'Content-type': 'application/x-www-form-urlencoded'},
       body: 'funcion='+funcion+'&&dni='+dni+'&&pass='+pass
@@ -23,7 +23,7 @@ $(document).ready(function(){
         //se descodifica el json
         let respuesta=JSON.parse(response);
         if(respuesta.mensaje=='success'){
-          location.href="/farmaciaV2/Views/catalogo.php";
+          location.href="/farmacia-V2/Views/catalogo.php";
         }else if(respuesta.mensaje=='error'){
           toastr.error('Datos de sesión incorrectos.', 'Error!')
           $('#form-login').trigger('reset');
@@ -48,7 +48,7 @@ $(document).ready(function(){
 
   async function verificar_sesion(){
     let funcion="verificar_sesion";
-    let data=await fetch('/farmaciaV2/Controllers/usuarioController.php',{
+    let data=await fetch('/farmacia-V2/Controllers/usuarioController.php',{
       method: 'POST',
       headers: {'Content-type': 'application/x-www-form-urlencoded'},
       body: 'funcion='+funcion
@@ -60,7 +60,7 @@ $(document).ready(function(){
         //se descodifica el json
         let respuesta=JSON.parse(response);
         if(respuesta.length!=0){
-          location.href="/farmaciaV2/Views/catalogo.php";
+          location.href="/farmacia-V2/Views/catalogo.php";
         }
       } catch (error) {
         console.error(error);
