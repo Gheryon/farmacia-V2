@@ -52,15 +52,20 @@ if ($_POST['funcion'] == 'login') {
 //el else if es para mejorar el rendimiento al no comprobar todos los if
 else if ($_POST['funcion'] == 'verificar_sesion') {
 	if(!empty($_SESSION['id'])){
-		$json=array(
-			'id'=>$_SESSION['id'],
-			'nombre'=>$_SESSION['nombre'],
-			'apellidos'=>$_SESSION['apellidos'],
-			'dni'=>$_SESSION['dni'],
-			'avatar'=>$_SESSION['avatar'],
-			'id_tipo'=>$_SESSION['id_tipo'],
-			'tipo'=>$_SESSION['tipo']
-		);
+		$usuario->login($_SESSION['dni']);
+		if(!empty($usuario->objetos)){
+			$json=array(
+				'id'=>$_SESSION['id'],
+				'nombre'=>$_SESSION['nombre'],
+				'apellidos'=>$_SESSION['apellidos'],
+				'dni'=>$_SESSION['dni'],
+				'avatar'=>$_SESSION['avatar'],
+				'id_tipo'=>$_SESSION['id_tipo'],
+				'tipo'=>$_SESSION['tipo']
+			);
+		}else{//el usuario se volvió inactivo durante la session, se manda json vacío
+			$json=array();
+		}
 	}else{//no hay sesión iniciada, se manda json vacío
 		$json=array();
 	}
@@ -213,6 +218,7 @@ else if ($_POST['funcion'] == 'obtener_usuarios') {
 			'sexo' => $objeto->sexo,
 			'adicional' => $objeto->adicional,
 			'avatar' => $objeto->avatar,
+			'estado' => $objeto->estado,
 			'id_tipo_sesion'=>$_SESSION['id_tipo']
 		);
 	}
@@ -258,36 +264,190 @@ else if ($_POST['funcion'] == 'crear_usuario') {
 	$jsonstring = json_encode($json);
 	echo $jsonstring;
 }
-/**************obsoleto*************** */
 
-if ($_POST['funcion'] == 'ascender') {
-	$pass = $_POST['pass'];
-	$id_ascendido = $_POST['id_usuario'];
-	$usuario->ascender($pass, $id_ascendido, $id_usuario);
-}
+else if ($_POST['funcion'] == 'eliminar_usuario') {
+	$mensaje='';
+	if(!empty($_SESSION['id'])){
+		$id_session = $_SESSION['id'];
+		$id_usuario_borrar = $_POST['id_user'];
+		$pass=$_POST['pass'];
+		
+		//el id_session está encriptado, necesario desencriptarlo
+		$formateado=str_replace(" ","+",$id_usuario_borrar);
+		$id_usuario=openssl_decrypt($formateado,CODE,KEY);
 
-if ($_POST['funcion'] == 'descender') {
-	$pass = $_POST['pass'];
-	$id_descendido = $_POST['id_usuario'];
-	$usuario->descender($pass, $id_descendido, $id_usuario);
-}
+		if(is_numeric($id_usuario)){
+			$usuario->obtener_datos($id_session);
+			$db_pass=openssl_decrypt($usuario->objetos[0]->contrasena, CODE, KEY);
+			if($db_pass!=''){//la contraseña de la db está encriptada
+				if($pass==$db_pass){
+					//eliminar usuario
+					$usuario->borrarUsuario($id_usuario);
+					$mensaje="success";
+				}else{
+					$mensaje="error_pass";
+				}
+			}else{//la contraseña de la db no está encriptada
+				if($pass==$usuario->objetos[0]->contrasena){
+					//eliminar usuario
+					$usuario->borrarUsuario($id_usuario);
+					$mensaje="success";
 
-if ($_POST['funcion'] == 'borrar_usuario') {
-	$pass = $_POST['pass'];
-	$id_borrado = $_POST['id_usuario'];
-	$usuario->borrarUsuario($pass, $id_borrado, $id_usuario);
-}
-
-if ($_POST['funcion'] == 'mostrar_avatar') {
-	$usuario->mostrar_avatar_nav($id_usuario);
-	$json = array();
-	foreach ($usuario->objetos as $objeto) {
-		$json = $objeto;
+				}else{
+					$mensaje="error_pass";
+				}
+			}
+		}else{
+			$mensaje='error_decrypt';	
+		}
+	}else{
+		$mensaje='error_session';
 	}
+	$json=array(
+		'mensaje'=>$mensaje,
+		'funcion'=>"eliminar usuario"
+	);
 	$jsonstring = json_encode($json);
 	echo $jsonstring;
 }
 
-if ($_POST['funcion'] == 'tipo_usuario') {
-	echo $tipo_usuario;
+else if ($_POST['funcion'] == 'reactivar_usuario') {
+	$mensaje='';
+	if(!empty($_SESSION['id'])){
+		$id_session = $_SESSION['id'];
+		$id_usuario_reactivar = $_POST['id_user'];
+		$pass=$_POST['pass'];
+		
+		//el id_session está encriptado, necesario desencriptarlo
+		$formateado=str_replace(" ","+",$id_usuario_reactivar);
+		$id_usuario=openssl_decrypt($formateado,CODE,KEY);
+
+		if(is_numeric($id_usuario)){
+			$usuario->obtener_datos($id_session);
+			$db_pass=openssl_decrypt($usuario->objetos[0]->contrasena, CODE, KEY);
+			if($db_pass!=''){//la contraseña de la db está encriptada
+				if($pass==$db_pass){
+					//eliminar usuario
+					$usuario->reactivarUsuario($id_usuario);
+					$mensaje="success";
+				}else{
+					$mensaje="error_pass";
+				}
+			}else{//la contraseña de la db no está encriptada
+				if($pass==$usuario->objetos[0]->contrasena){
+					//eliminar usuario
+					$usuario->reactivarUsuario($id_usuario);
+					$mensaje="success";
+
+				}else{
+					$mensaje="error_pass";
+				}
+			}
+		}else{
+			$mensaje='error_decrypt';	
+		}
+	}else{
+		$mensaje='error_session';
+	}
+	$json=array(
+		'mensaje'=>$mensaje,
+		'funcion'=>"reactivar usuario"
+	);
+	$jsonstring = json_encode($json);
+	echo $jsonstring;
 }
+
+else if ($_POST['funcion'] == 'ascender_usuario') {
+	$mensaje='';
+	if(!empty($_SESSION['id'])){
+		$id_session = $_SESSION['id'];
+		$id_usuario_reactivar = $_POST['id_user'];
+		$pass=$_POST['pass'];
+		
+		//el id_session está encriptado, necesario desencriptarlo
+		$formateado=str_replace(" ","+",$id_usuario_reactivar);
+		$id_usuario=openssl_decrypt($formateado,CODE,KEY);
+		$tipo_usuario=2;//tipo farmaceutico
+
+		if(is_numeric($id_usuario)){
+			$usuario->obtener_datos($id_session);
+			$db_pass=openssl_decrypt($usuario->objetos[0]->contrasena, CODE, KEY);
+			if($db_pass!=''){//la contraseña de la db está encriptada
+				if($pass==$db_pass){
+					//eliminar usuario
+					$usuario->actualizarTipoUsuario($id_usuario, $tipo_usuario);
+					$mensaje="success";
+				}else{
+					$mensaje="error_pass";
+				}
+			}else{//la contraseña de la db no está encriptada
+				if($pass==$usuario->objetos[0]->contrasena){
+					//eliminar usuario
+					$usuario->actualizarTipoUsuario($id_usuario, $tipo_usuario);
+					$mensaje="success";
+
+				}else{
+					$mensaje="error_pass";
+				}
+			}
+		}else{
+			$mensaje='error_decrypt';	
+		}
+	}else{
+		$mensaje='error_session';
+	}
+	$json=array(
+		'mensaje'=>$mensaje,
+		'funcion'=>"ascender usuario"
+	);
+	$jsonstring = json_encode($json);
+	echo $jsonstring;
+}
+
+else if ($_POST['funcion'] == 'descender_usuario') {
+	$mensaje='';
+	if(!empty($_SESSION['id'])){
+		$id_session = $_SESSION['id'];
+		$id_usuario_reactivar = $_POST['id_user'];
+		$pass=$_POST['pass'];
+		
+		//el id_session está encriptado, necesario desencriptarlo
+		$formateado=str_replace(" ","+",$id_usuario_reactivar);
+		$id_usuario=openssl_decrypt($formateado,CODE,KEY);
+		$tipo_usuario=3;
+
+		if(is_numeric($id_usuario)){
+			$usuario->obtener_datos($id_session);
+			$db_pass=openssl_decrypt($usuario->objetos[0]->contrasena, CODE, KEY);
+			if($db_pass!=''){//la contraseña de la db está encriptada
+				if($pass==$db_pass){
+					//eliminar usuario
+					$usuario->actualizarTipoUsuario($id_usuario, $tipo_usuario);
+					$mensaje="success";
+				}else{
+					$mensaje="error_pass";
+				}
+			}else{//la contraseña de la db no está encriptada
+				if($pass==$usuario->objetos[0]->contrasena){
+					//eliminar usuario
+					$usuario->actualizarTipoUsuario($id_usuario, $tipo_usuario);
+					$mensaje="success";
+
+				}else{
+					$mensaje="error_pass";
+				}
+			}
+		}else{
+			$mensaje='error_decrypt';	
+		}
+	}else{
+		$mensaje='error_session';
+	}
+	$json=array(
+		'mensaje'=>$mensaje,
+		'funcion'=>"descender usuario"
+	);
+	$jsonstring = json_encode($json);
+	echo $jsonstring;
+}
+?>

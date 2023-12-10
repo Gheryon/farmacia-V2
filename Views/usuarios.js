@@ -86,10 +86,18 @@ $(document).ready(function(){
                   template+=`<span class="badge badge-danger">${datos.tipo}</span>`;
                 }
                 if(datos.id_tipo==2){
-                  template+=`<span class="badge badge-success">${datos.tipo}</span>`;
+                  if(datos.estado=='A'){
+                    template+=`<span class="badge badge-success">${datos.tipo}</span>`;
+                  }else{
+                    template+=`<span class="badge badge-success">${datos.tipo}</span> - <span class="badge badge-secondary">Inactivo</span>`;
+                  }
                 }
                 if(datos.id_tipo==3){
-                  template+=`<span class="badge badge-info">${datos.tipo}</span>`;
+                  if(datos.estado=='A'){
+                    template+=`<span class="badge badge-info">${datos.tipo}</span>`;
+                  }else{
+                    template+=`<span class="badge badge-info">${datos.tipo}</span> - <span class="badge badge-secondary">Inactivo</span>`;
+                  }
                 }
               template+=`</div>
                 <div class="card-body pt-0">
@@ -119,7 +127,7 @@ $(document).ready(function(){
                 <div class="card-footer">
                   <div class="text-right">`;
                   //id_tipo_sesion es distinto de id_tipo, el primero es el del usuario que ha iniciado sesion, el otro es el de cada usuario
-                  if(datos.id_tipo_sesion==1&&datos.id_tipo!=1){
+                  if(datos.id_tipo_sesion==1&&datos.id_tipo!=1&&datos.estado=='A'){
                     if(datos.id_tipo==2){
                       //farmaceutico puede ser eliminado y descendido
                       template+=`<button id="${datos.id}" avatar="${datos.avatar}" nombre="${datos.nombre}" apellidos="${datos.apellidos}" funcion="eliminar_usuario" class="confirmar btn bg-gradient-danger btn-circle btn-lg" title="Borrar" data-toggle="modal" data-target="#confirmar">
@@ -138,7 +146,7 @@ $(document).ready(function(){
                         <i class="fas fa-sort-amount-up mr-1"></i>
                       </button>`;
                     }
-                  }else if(datos.id_tipo_sesion==2&&datos.id_tipo!=1&&datos.id_tipo!=2){
+                  }else if(datos.id_tipo_sesion==2&&datos.id_tipo!=1&&datos.id_tipo!=2&&datos.estado=='A'){
                     if(datos.id_tipo==3){
                       //tecnico puede eliminado y ascendido
                       template+=`<button id="${datos.id}" avatar="${datos.avatar}" nombre="${datos.nombre}" apellidos="${datos.apellidos}" funcion="eliminar_usuario" class="confirmar btn bg-gradient-danger btn-circle btn-lg" title="Borrar" data-toggle="modal" data-target="#confirmar">
@@ -148,6 +156,10 @@ $(document).ready(function(){
                         <i class="fas fa-sort-amount-up mr-1"></i>
                       </button>`; 
                     }
+                  }else if(datos.estado=='I'){
+                    template+=`<button id="${datos.id}" avatar="${datos.avatar}" nombre="${datos.nombre}" apellidos="${datos.apellidos}" funcion="reactivar_usuario" class="confirmar btn bg-gradient-success btn-circle btn-lg" title="Reactivar" data-toggle="modal" data-target="#confirmar">
+                      <i class="fas fa-plus mr-1"></i>
+                    </button>`;
                   }
                   template+=`
                   </div>
@@ -654,6 +666,130 @@ $(document).ready(function(){
       })
     }
   }
+
+  async function confirmar(datos) {
+		let data = await fetch('/farmacia-V2/Controllers/usuarioController.php', {
+			method: 'POST',
+			body: datos
+		})
+		if (data.ok) {
+			//mejor usar data.text que data.json, pues si hay error, este se añade como cadena de texto a los datos
+			let response = await data.text();
+			try {
+				//se descodifica el json
+				let respuesta = JSON.parse(response);
+				if(respuesta.mensaje=='success'){
+          if(respuesta.funcion=="eliminar usuario"){
+            toastr.success('Usuario eliminado.', 'Éxito');
+            obtener_usuarios();
+            $('#confirmar').modal('hide');
+            $('#form-confirmar').trigger('reset');
+          }
+          else if(respuesta.funcion=="reactivar usuario"){
+            toastr.success('Usuario reactivado.', 'Éxito');
+            obtener_usuarios();
+            $('#confirmar').modal('hide');
+            $('#form-confirmar').trigger('reset');
+          }
+          else if(respuesta.funcion=="ascender usuario"){
+            toastr.success('Usuario ascendido.', 'Éxito');
+            obtener_usuarios();
+            $('#confirmar').modal('hide');
+            $('#form-confirmar').trigger('reset');
+          }
+          else if(respuesta.funcion=="descender usuario"){
+            toastr.success('Usuario descendido.', 'Éxito');
+            obtener_usuarios();
+            $('#confirmar').modal('hide');
+            $('#form-confirmar').trigger('reset');
+          }
+				}else{
+					if(respuesta.mensaje=='error_usuario'){
+						Swal.fire({
+							position: 'center',
+							icon: 'error',
+							title: 'Ya existe el usuario.',
+              text: 'El usuario ya está registrado en el sistema.'
+						});
+            $('#crear_usuario').modal('hide');
+            $('#residencia').val('').trigger('change');
+					}
+          if(respuesta.mensaje=='error_decrypt'){
+						Swal.fire({
+							position: 'center',
+							icon: 'error',
+							title: 'No vulnere los datos',
+							showConfirmButton: true,
+							timer: 1000,
+						}).then(function(){
+							location.reload();
+						});
+					}
+          if(respuesta.mensaje=='error_pass'){
+						toastr.error('No se pudo '+respuesta.funcion+', la contraseña no es correcta, vuelva a introducirla.', 'Error');
+					}
+					if(respuesta.mensaje=='error_session'){
+						Swal.fire({
+							position: 'center',
+							icon: 'error',
+							title: 'Sesión finalizada',
+							showConfirmButton: true,
+							timer: 1000,
+						}).then(function(){
+							location.href("/farmacia-V2/index.php");
+						});
+					}
+				}
+			} catch (error) {
+				console.error(error);
+				console.log(response);
+				Swal.fire({
+					icon: 'error',
+					title: 'Error',
+					text: 'Hubo conflicto en el sistema, póngase en contacto con el administrador.'
+				})
+			}
+		} else {
+			Swal.fire({
+				icon: 'error',
+				title: data.statusText,
+				text: 'Hubo conflicto de código: ' + data.status
+			})
+		}
+	}
+
+  $.validator.setDefaults({
+    submitHandler: function () {
+      let datos=new FormData($('#form-confirmar')[0]);
+			confirmar(datos);
+    }
+  });
+
+  $('#form-confirmar').validate({
+    rules: {
+      pass: {
+        required: true,
+      }
+    },
+    messages: {
+      pass: {
+        required: "Es necesario introducir una contraseña.",
+      }
+    },
+    errorElement: 'span',
+    errorPlacement: function (error, element) {
+      error.addClass('invalid-feedback');
+      element.closest('.form-group').append(error);
+    },
+    highlight: function (element, errorClass, validClass) {
+      $(element).addClass('is-invalid');
+			$(element).removeClass('is-valid');
+    },
+    unhighlight: function (element, errorClass, validClass) {
+      $(element).removeClass('is-invalid');
+			$(element).addClass('is-valid');
+    }
+  });
 
   function loader(mensaje){
     if(mensaje==''||mensaje==null){
