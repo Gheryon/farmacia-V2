@@ -7,58 +7,10 @@ $(document).ready(function(){
   toastr.options={
     "preventDuplicates": true
   }
-  
-  $('#residencia').select2({
-		placeholder: 'Seleccione una residencia',
-		language:{
-			noResult: function(){
-				return "No hay resultados."},
-			searching: function(){
-				return "Buscando..."},
-		}
-	});
 
-	async function fill_residencias() {
-		let funcion = "fill_residencias";
-		let data = await fetch('/farmacia-V2/Controllers/municipioController.php', {
-			method: 'POST',
-			headers: { 'Content-type': 'application/x-www-form-urlencoded' },
-			body: 'funcion=' + funcion
-		})
-		if (data.ok) {
-			//mejor usar data.text que data.json, pues si hay error, este se añade como cadena de texto a los datos
-			let response = await data.text();
-			try {
-				//se descodifica el json
-				let residencias = JSON.parse(response);
-				let template=``;
-				residencias.forEach(residencia => {
-					template+=`
-					<option value="${residencia.id}">${residencia.residencia}</option> `;
-				});
-				$('#residencia').html(template);
-				$('#residencia').val('').trigger('change');
-			} catch (error) {
-				console.error(error);
-				console.log(response);
-				Swal.fire({
-					icon: 'error',
-					title: 'Error',
-					text: 'Hubo conflicto en el sistema, póngase en contacto con el administrador.'
-				})
-			}
-		} else {
-			Swal.fire({
-				icon: 'error',
-				title: data.statusText,
-				text: 'Hubo conflicto de código: ' + data.status
-			})
-		}
-	}
-
-  async function obtener_usuarios(){
-    let funcion="obtener_usuarios";
-    let data=await fetch('/farmacia-V2/Controllers/usuarioController.php',{
+  async function obtener_clientes(){
+    let funcion="obtener_clientes";
+    let data=await fetch('/farmacia-V2/Controllers/clienteController.php',{
       method: 'POST',
       headers: {'Content-type': 'application/x-www-form-urlencoded'},
       body: 'funcion='+funcion
@@ -68,36 +20,25 @@ $(document).ready(function(){
       let response=await data.text();
       try{
         //se descodifica el json
-        let usuarios=JSON.parse(response);
-        $('#usuarios').DataTable({
-          data: usuarios,
+        let clientes=JSON.parse(response);
+        console.log(clientes);
+        $('#clientes').DataTable({
+          data: clientes,
           "aaSorting":[],
           "searching": true,
           "scrollX": true,
           "autoWidth": false,
           columns: [
-            //la variable datos es la variable usuarios
+            //la variable datos es la variable clientes
             {"render": function(data, type, datos, meta){
               let template='';
               template+=`
               <div class="card bg-light">
                 <div class="h5 card-header text-muted border-bottom-0">`
-                if(datos.id_tipo==1){
-                  template+=`<span class="badge badge-danger">${datos.tipo}</span>`;
-                }
-                if(datos.id_tipo==2){
-                  if(datos.estado=='A'){
-                    template+=`<span class="badge badge-success">${datos.tipo}</span>`;
-                  }else{
-                    template+=`<span class="badge badge-success">${datos.tipo}</span> - <span class="badge badge-secondary">Inactivo</span>`;
-                  }
-                }
-                if(datos.id_tipo==3){
-                  if(datos.estado=='A'){
-                    template+=`<span class="badge badge-info">${datos.tipo}</span>`;
-                  }else{
-                    template+=`<span class="badge badge-info">${datos.tipo}</span> - <span class="badge badge-secondary">Inactivo</span>`;
-                  }
+                if(datos.estado=='A'){
+                  template+=`<span class="badge badge-success">Activo</span>`;
+                }else{
+                  template+=`<span class="badge badge-secondary">Inactivo</span>`;
                 }
               template+=`</div>
                 <div class="card-body pt-0">
@@ -108,57 +49,36 @@ $(document).ready(function(){
                         <li class="h8"><span class="fa-li"><i class="fas fa-lg fa-angle-double-right"></i></span> DNI: ${datos.dni}</li>
                         <li class="h8"><span class="fa-li"><i class="fas fa-lg fa-angle-double-right"></i></span> Edad: ${datos.edad}</li>
                         <li class="h8"><span class="fa-li"><i class="fas fa-lg fa-angle-double-right"></i></span> Teléfono: ${datos.telefono}</li>
-                        <li class="h8"><span class="fa-li"><i class="fas fa-lg fa-angle-double-right"></i></span> Dirección: ${datos.direccion}</li>
                       </ul>
                     </div>
                     <div class="col-md-4">
                       <ul class="ml-4 mb-0 fa-ul text-muted">
-                        <li class="h8"><span class="fa-li"><i class="fas fa-lg fa-angle-double-right"></i></span> Residencia: ${datos.residencia}</li>
                         <li class="h8"><span class="fa-li"><i class="fas fa-lg fa-angle-double-right"></i></span> Correo: ${datos.correo}</li>
                         <li class="h8"><span class="fa-li"><i class="fas fa-lg fa-angle-double-right"></i></span> Sexo: ${datos.sexo}</li>
                         <li class="h8"><span class="fa-li"><i class="fas fa-lg fa-angle-double-right"></i></span> Adicional: ${datos.adicional}</li>
                       </ul>
                     </div>
                     <div class="col-md-4 text-center">
-                      <img src="/farmacia-V2/util/img/user/${datos.avatar}" alt="user-avatar" width="150px" class="img-circle img-fluid">
+                      <img src="/farmacia-V2/util/img/${datos.avatar}" alt="user-avatar" width="150px" class="img-circle img-fluid">
                     </div>
                   </div>
                 </div>
                 <div class="card-footer">
                   <div class="text-right">`;
-                  //id_tipo_sesion es distinto de id_tipo, el primero es el del usuario que ha iniciado sesion, el otro es el de cada usuario
-                  if(datos.id_tipo_sesion==1&&datos.id_tipo!=1&&datos.estado=='A'){
-                    if(datos.id_tipo==2){
-                      //farmaceutico puede ser eliminado y descendido
-                      template+=`<button id="${datos.id}" avatar="${datos.avatar}" nombre="${datos.nombre}" apellidos="${datos.apellidos}" funcion="eliminar_usuario" class="confirmar btn bg-gradient-danger btn-circle btn-lg" title="Borrar" data-toggle="modal" data-target="#confirmar">
-                        <i class="far fa-trash-alt mr-1"></i>
-                      </button>
-                      <button id="${datos.id}" avatar="${datos.avatar}" nombre="${datos.nombre}" apellidos="${datos.apellidos}" funcion="descender_usuario" class="confirmar btn bg-gradient-secondary btn-circle btn-lg" title="Descender" data-toggle="modal" data-target="#confirmar">
-                        <i class="fas fa-sort-amount-down mr-1"></i>
-                      </button>`;
-                    }
-                    if(datos.id_tipo==3){
-                      //tecnico puede eliminado y ascendido
-                      template+=`<button id="${datos.id}" avatar="${datos.avatar}" nombre="${datos.nombre}" apellidos="${datos.apellidos}" funcion="eliminar_usuario" class="confirmar btn bg-gradient-danger btn-circle btn-lg" title="Borrar" data-toggle="modal" data-target="#confirmar">
-                        <i class="far fa-trash-alt mr-1"></i>
-                      </button>
-                      <button id="${datos.id}" avatar="${datos.avatar}" nombre="${datos.nombre}" apellidos="${datos.apellidos}" funcion="ascender_usuario" class="confirmar btn bg-gradient-success btn-circle btn-lg" title="Ascender" data-toggle="modal" data-target="#confirmar">
-                        <i class="fas fa-sort-amount-up mr-1"></i>
-                      </button>`;
-                    }
-                  }else if(datos.id_tipo_sesion==2&&datos.id_tipo!=1&&datos.id_tipo!=2&&datos.estado=='A'){
-                    if(datos.id_tipo==3){
-                      //tecnico puede eliminado y ascendido
-                      template+=`<button id="${datos.id}" avatar="${datos.avatar}" nombre="${datos.nombre}" apellidos="${datos.apellidos}" funcion="eliminar_usuario" class="confirmar btn bg-gradient-danger btn-circle btn-lg" title="Borrar" data-toggle="modal" data-target="#confirmar">
-                        <i class="far fa-trash-alt mr-1"></i>
-                      </button>
-                      <button id="${datos.id}" avatar="${datos.avatar}" nombre="${datos.nombre}" apellidos="${datos.apellidos}" funcion="ascender_usuario" class="confirmar btn bg-gradient-success btn-circle btn-lg" title="Ascender" data-toggle="modal" data-target="#confirmar">
-                        <i class="fas fa-sort-amount-up mr-1"></i>
-                      </button>`; 
-                    }
+                  //id_tipo_sesion es distinto de id_tipo, el primero es el del cliente que ha iniciado sesion, el otro es el de cada cliente
+                  if(datos.estado=='A'){
+                    template+=`<button id="${datos.id}" avatar="${datos.avatar}" nombre="${datos.nombre}" apellidos="${datos.apellidos}" class="eliminar_cliente btn bg-gradient-danger btn-circle btn-lg" title="Borrar">
+                      <i class="far fa-trash-alt mr-1"></i>
+                    </button>
+                    <button id="${datos.id}" avatar="${datos.avatar}" nombre="${datos.nombre}" apellidos="${datos.apellidos}" class="editar_cliente btn bg-gradient-success btn-circle btn-lg" title="Editar">
+                      <i class="fas fa-pencil-alt mr-1"></i>
+                    </button>`;
                   }else if(datos.estado=='I'){
-                    template+=`<button id="${datos.id}" avatar="${datos.avatar}" nombre="${datos.nombre}" apellidos="${datos.apellidos}" funcion="reactivar_usuario" class="confirmar btn bg-gradient-success btn-circle btn-lg" title="Reactivar" data-toggle="modal" data-target="#confirmar">
+                    template+=`<button id="${datos.id}" avatar="${datos.avatar}" nombre="${datos.nombre}" apellidos="${datos.apellidos}" funcion="reactivar_cliente" class="reactivar btn bg-gradient-primary btn-circle btn-lg" title="Reactivar">
                       <i class="fas fa-plus mr-1"></i>
+                    </button>
+                    <button id="${datos.id}" avatar="${datos.avatar}" nombre="${datos.nombre}" apellidos="${datos.apellidos}" class="editar_cliente btn bg-gradient-success btn-circle btn-lg" title="Editar">
+                      <i class="fas fa-pencil-alt mr-1"></i>
                     </button>`;
                   }
                   template+=`
@@ -204,8 +124,8 @@ $(document).ready(function(){
 
   });
 
-	async function crear_usuario(datos) {
-		let data = await fetch('/farmacia-V2/Controllers/usuarioController.php', {
+	async function crear_cliente(datos) {
+		let data = await fetch('/farmacia-V2/Controllers/clienteController.php', {
 			method: 'POST',
 			body: datos
 		})
@@ -216,32 +136,19 @@ $(document).ready(function(){
 				//se descodifica el json
 				let respuesta = JSON.parse(response);
 				if(respuesta.mensaje=='success'){
-					toastr.success('Usuario creado.', 'Éxito');
-					obtener_usuarios();
-					$('#crear_usuario').modal('hide');
-          $('#form-crear_usuario').trigger('reset');
-          $('#residencia').val('').trigger('change');
+					toastr.success('Cliente creado.', 'Éxito');
+					obtener_clientes();
+					$('#crear_cliente').modal('hide');
+          $('#form-crear_cliente').trigger('reset');
 				}else{
-					if(respuesta.mensaje=='error_usuario'){
+					if(respuesta.mensaje=='error_cliente'){
 						Swal.fire({
 							position: 'center',
 							icon: 'error',
-							title: 'Ya existe el usuario.',
-              text: 'El usuario ya está registrado en el sistema.'
+							title: 'Ya existe el cliente.',
+              text: 'El cliente ya está registrado en el sistema.'
 						});
-            $('#crear_usuario').modal('hide');
-            $('#residencia').val('').trigger('change');
-					}
-          if(respuesta.mensaje=='error_decrypt'){
-						Swal.fire({
-							position: 'center',
-							icon: 'error',
-							title: 'No vulnere los datos',
-							showConfirmButton: true,
-							timer: 1000,
-						}).then(function(){
-							location.reload();
-						});
+            $('#crear_cliente').modal('hide');
 					}
 					if(respuesta.mensaje=='error_session'){
 						Swal.fire({
@@ -275,10 +182,10 @@ $(document).ready(function(){
 
   $.validator.setDefaults({
     submitHandler: function () {
-      let datos=new FormData($('#form-crear_usuario')[0]);
-			let funcion = "crear_usuario";
+      let datos=new FormData($('#form-crear_cliente')[0]);
+			let funcion = "crear_cliente";
 			datos.append('funcion', funcion);
-			crear_usuario(datos);
+			crear_cliente(datos);
     }
   });
 
@@ -290,7 +197,7 @@ $(document).ready(function(){
     return estado;
   },"*No se permiten números.");*/
   //no hace falta incluir el mensaje no_numbers, ya aparece en el addMethod anterior
-  $('#form-crear_usuario').validate({
+  $('#form-crear_cliente').validate({
     rules: {
       nombre: {
         required: true,
@@ -309,22 +216,11 @@ $(document).ready(function(){
 				minlength: 8,
 				maxlength: 8
       },
-      password: {
-        required: true
-      },
       telefono: {
         required: true,
         number: true,
 				minlength: 9,
 				maxlength: 9
-      },
-      residencia: {
-        required: true
-      },
-			direccion: {
-        required: true,
-				minlength: 2,
-				maxlength: 100
       },
       correo: {
         required: true,
@@ -358,22 +254,11 @@ $(document).ready(function(){
 				minlength: "Debe contener 8 caracteres.",
 				maxlength: "Debe contener 8 caracteres."
       },
-      password: {
-        required: "Contraseña requerida."
-      },
       telefono: {
         required: "Introduce un número de teléfono",
         number: "Debe contener números",
 				minlength: "Debe contener 9 caracteres.",
 				maxlength: "Debe contener 9 caracteres."
-      },
-      residencia: {
-        required: "Dato requerido"
-      },
-			direccion: {
-        required: "Dato requerido",
-				minlength: "Debe contener 2 caracteres mínimo.",
-				maxlength: "Debe contener 100 caracteres máximo."
       },
       correo: {
         required: "Introduce una dirección de correo.",
@@ -403,7 +288,7 @@ $(document).ready(function(){
     }
   });
 
-  function cargar_menu_superior(usuario) {
+  function cargar_menu_superior(cliente) {
     let template=`
     <!-- Left navbar links -->
     <ul class="navbar-nav">
@@ -510,11 +395,11 @@ $(document).ready(function(){
           <a href="#" class="dropdown-item dropdown-footer">See All Notifications</a>
         </div>
       </li>
-      <!-- información de usuario -->
+      <!-- información de cliente -->
       <li class="nav-item dropdown">
         <a class="nav-link" data-toggle="dropdown" href="#">
-        <img src="/farmacia-V2/util/img/user/${usuario.avatar}" width="30" height="30" alt="Farmacia Logo">
-          <span>${usuario.nombre+' '+usuario.apellidos}</span>
+        <img src="/farmacia-V2/util/img/user/${cliente.avatar}" width="30" height="30" alt="Farmacia Logo">
+          <span>${cliente.nombre+' '+cliente.apellidos}</span>
         </a>
         <ul class="dropdown-menu">
           <li>
@@ -526,15 +411,15 @@ $(document).ready(function(){
     $('#menu_superior').html(template);
   }
 
-  function cargar_menu_lateral(usuario) {
+  function cargar_menu_lateral(cliente) {
     let template=`
     <!-- Sidebar user (optional) -->
     <div class="user-panel mt-3 pb-3 mb-3 d-flex">
       <div class="image">
-        <img src="/farmacia-V2/util/img/user/${usuario.avatar}" class="img-circle elevation-2" alt="User Image">
+        <img src="/farmacia-V2/util/img/user/${cliente.avatar}" class="img-circle elevation-2" alt="User Image">
       </div>
       <div class="info">
-        <a href="#" class="d-block">${usuario.nombre+' '+usuario.apellidos}</a>
+        <a href="#" class="d-block">${cliente.nombre+' '+cliente.apellidos}</a>
       </div>
     </div>
 
@@ -543,7 +428,7 @@ $(document).ready(function(){
       <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
         <!-- Add icons to the links using the .nav-icon class
             with font-awesome or any other icon font library -->
-        <li class="nav-header">Usuario</li>
+        <li class="nav-header">Cliente</li>
         <li class="nav-item">
           <a href="/farmacia-V2/Views/perfil.php" class="nav-link">
             <i class="nav-icon fas fa-user-cog"></i>
@@ -552,11 +437,11 @@ $(document).ready(function(){
             </p>
           </a>
         </li>
-        <li id="gestion_usuario" class="nav-item">
+        <li id="gestion_cliente" class="nav-item">
           <a href="/farmacia-V2/Views/usuarios.php" class="nav-link">
             <i class="nav-icon fas fa-users"></i>
             <p>
-              Gestión usuario
+              Gestión usuarios
             </p>
           </a>
         </li>
@@ -639,12 +524,11 @@ $(document).ready(function(){
       let response=await data.text();
       try{
         //se descodifica el json
-        let usuario=JSON.parse(response);
-        if(usuario.length!=0&&usuario.id_tipo!=3){
-          cargar_menu_superior(usuario);
-          cargar_menu_lateral(usuario);
-          fill_residencias();
-          obtener_usuarios();
+        let cliente=JSON.parse(response);
+        if(cliente.length!=0&&cliente.id_tipo!=3){
+          cargar_menu_superior(cliente);
+          cargar_menu_lateral(cliente);
+          obtener_clientes();
           closeLoader();
         }else{
           location.href="/farmacia-V2/";
@@ -668,7 +552,7 @@ $(document).ready(function(){
   }
 
   async function confirmar(datos) {
-		let data = await fetch('/farmacia-V2/Controllers/usuarioController.php', {
+		let data = await fetch('/farmacia-V2/Controllers/clienteController.php', {
 			method: 'POST',
 			body: datos
 		})
@@ -679,39 +563,39 @@ $(document).ready(function(){
 				//se descodifica el json
 				let respuesta = JSON.parse(response);
 				if(respuesta.mensaje=='success'){
-          if(respuesta.funcion=="eliminar usuario"){
-            toastr.success('Usuario eliminado.', 'Éxito');
-            obtener_usuarios();
+          if(respuesta.funcion=="eliminar cliente"){
+            toastr.success('Cliente eliminado.', 'Éxito');
+            obtener_clientes();
             $('#confirmar').modal('hide');
             $('#form-confirmar').trigger('reset');
           }
-          else if(respuesta.funcion=="reactivar usuario"){
-            toastr.success('Usuario reactivado.', 'Éxito');
-            obtener_usuarios();
+          else if(respuesta.funcion=="reactivar cliente"){
+            toastr.success('Cliente reactivado.', 'Éxito');
+            obtener_clientes();
             $('#confirmar').modal('hide');
             $('#form-confirmar').trigger('reset');
           }
-          else if(respuesta.funcion=="ascender usuario"){
-            toastr.success('Usuario ascendido.', 'Éxito');
-            obtener_usuarios();
+          else if(respuesta.funcion=="ascender cliente"){
+            toastr.success('Cliente ascendido.', 'Éxito');
+            obtener_clientes();
             $('#confirmar').modal('hide');
             $('#form-confirmar').trigger('reset');
           }
-          else if(respuesta.funcion=="descender usuario"){
-            toastr.success('Usuario descendido.', 'Éxito');
-            obtener_usuarios();
+          else if(respuesta.funcion=="descender cliente"){
+            toastr.success('Cliente descendido.', 'Éxito');
+            obtener_clientes();
             $('#confirmar').modal('hide');
             $('#form-confirmar').trigger('reset');
           }
 				}else{
-					if(respuesta.mensaje=='error_usuario'){
+					if(respuesta.mensaje=='error_cliente'){
 						Swal.fire({
 							position: 'center',
 							icon: 'error',
-							title: 'Ya existe el usuario.',
-              text: 'El usuario ya está registrado en el sistema.'
+							title: 'Ya existe el cliente.',
+              text: 'El cliente ya está registrado en el sistema.'
 						});
-            $('#crear_usuario').modal('hide');
+            $('#crear_cliente').modal('hide');
             $('#residencia').val('').trigger('change');
 					}
           if(respuesta.mensaje=='error_decrypt'){
@@ -815,75 +699,75 @@ $(document).ready(function(){
       })
     }
   }
-/*    var tipo_usuario= $('#tipo_usuario').val();
-    //si el tipo de usuario==2, tecnico, no se muestra boton de crear usuario
-    if(tipo_usuario==2){
-      $('#button-crear-usuario').hide();
+/*    var tipo_cliente= $('#tipo_cliente').val();
+    //si el tipo de cliente==2, tecnico, no se muestra boton de crear cliente
+    if(tipo_cliente==2){
+      $('#button-crear-cliente').hide();
     }
     buscar_datos();
     var funcion;
     function buscar_datos(consulta) {
-        funcion='buscar_usuarios_adm';
-        $.post('../controlador/usuarioController.php', {consulta, funcion},(response)=>{
-            const usuarios= JSON.parse(response);
+        funcion='buscar_clientes_adm';
+        $.post('../controlador/clienteController.php', {consulta, funcion},(response)=>{
+            const clientes= JSON.parse(response);
             let template='';
-            console.log(tipo_usuario);
-            usuarios.forEach(usuario => {
+            console.log(tipo_cliente);
+            clientes.forEach(cliente => {
                 template+=`
-                <div usuarioId="${usuario.id}"class="col-12 col-sm6 col-md-4 d-flex align-items-stretch flex-column">
+                <div clienteId="${cliente.id}"class="col-12 col-sm6 col-md-4 d-flex align-items-stretch flex-column">
               <div class="card bg-light d-flex flex-fill">
               <div class="card-header text-muted border-bottom-0">`;
-                if(usuario.tipo_usuario==3){
-                  template+=`<h1 class="badge badge-danger">${usuario.tipo}</h1>`;
+                if(cliente.tipo_cliente==3){
+                  template+=`<h1 class="badge badge-danger">${cliente.tipo}</h1>`;
                 }
-                if(usuario.tipo_usuario==2){
-                  template+=`<h1 class="badge badge-warning">${usuario.tipo}</h1>`;
+                if(cliente.tipo_cliente==2){
+                  template+=`<h1 class="badge badge-warning">${cliente.tipo}</h1>`;
                 }
-                if(usuario.tipo_usuario==1){
-                  template+=`<h1 class="badge badge-info">${usuario.tipo}</h1>`;
+                if(cliente.tipo_cliente==1){
+                  template+=`<h1 class="badge badge-info">${cliente.tipo}</h1>`;
                 }
                 template+=`
               </div>
               <div class="card-body pt-0">
                 <div class="row">
                   <div class="col-7">
-                    <h2 class="lead"><b>${usuario.nombre} ${usuario.apellidos}</b></h2>
-                    <p class="text-muted text-sm"><b>Sobre mí: </b> ${usuario.adicional} </p>
+                    <h2 class="lead"><b>${cliente.nombre} ${cliente.apellidos}</b></h2>
+                    <p class="text-muted text-sm"><b>Sobre mí: </b> ${cliente.adicional} </p>
                     <ul class="ml-4 mb-0 fa-ul text-muted">
-                    <li class="small"><span class="fa-li"><i class="fas fa-lg fa-id-card"></i></span> DNI: + ${usuario.dni}</li>
-                    <li class="small"><span class="fa-li"><i class="fas fa-lg fa-birthday-cake"></i></span> Edad #: + ${usuario.edad}</li>
-                      <li class="small"><span class="fa-li"><i class="fas fa-lg fa-building"></i></span> Residencia: ${usuario.residencia}</li>
-                      <li class="small"><span class="fa-li"><i class="fas fa-lg fa-phone"></i></span> Teléfono #: + ${usuario.telefono}</li>
-                      <li class="small"><span class="fa-li"><i class="fas fa-lg fa-at"></i></span> Correo #: + ${usuario.correo}</li>
-                      <li class="small"><span class="fa-li"><i class="fas fa-lg fa-smile-wink"></i></span> Sexo #: + ${usuario.sexo}</li>
+                    <li class="small"><span class="fa-li"><i class="fas fa-lg fa-id-card"></i></span> DNI: + ${cliente.dni}</li>
+                    <li class="small"><span class="fa-li"><i class="fas fa-lg fa-birthday-cake"></i></span> Edad #: + ${cliente.edad}</li>
+                      <li class="small"><span class="fa-li"><i class="fas fa-lg fa-building"></i></span> Residencia: ${cliente.residencia}</li>
+                      <li class="small"><span class="fa-li"><i class="fas fa-lg fa-phone"></i></span> Teléfono #: + ${cliente.telefono}</li>
+                      <li class="small"><span class="fa-li"><i class="fas fa-lg fa-at"></i></span> Correo #: + ${cliente.correo}</li>
+                      <li class="small"><span class="fa-li"><i class="fas fa-lg fa-smile-wink"></i></span> Sexo #: + ${cliente.sexo}</li>
                     </ul>
                   </div>
                   <div class="col-5 text-center">
-                    <img src="${usuario.avatar}" alt="user-avatar" class="img-circle img-fluid">
+                    <img src="${cliente.avatar}" alt="user-avatar" class="img-circle img-fluid">
                   </div>
                 </div>
               </div>
               <div class="card-footer">
                 <div class="text-right">`;
-                //comprobar si usuario logueado es root
-                if(tipo_usuario==3){
+                //comprobar si cliente logueado es root
+                if(tipo_cliente==3){
                   //si es root, puede eliminar a todos menos a root
-                  if(usuario.tipo_usuario!=3){
+                  if(cliente.tipo_cliente!=3){
                     template+=`
-                    <button class="borrar-usuario btn btn-danger mr-1  type="button" data-toggle="modal" data-target="#confirmar">
+                    <button class="borrar-cliente btn btn-danger mr-1  type="button" data-toggle="modal" data-target="#confirmar">
                       <i class="fas fa-window-close mr-1"></i>Eliminar
                   </button>
                     `;
                   }
-                  //si el usuario es un técnico, root puede ascenderlo
-                  if(usuario.tipo_usuario==2){
+                  //si el cliente es un técnico, root puede ascenderlo
+                  if(cliente.tipo_cliente==2){
                     template+=`
                     <button class="ascender btn btn-primary ml-1" type="button" data-toggle="modal" data-target="#confirmar">
                       <i class="fas fa-sort-amount-up mr-1"></i>Ascender
                   </button>
                     `;
                   }
-                  if(usuario.tipo_usuario==1){
+                  if(cliente.tipo_cliente==1){
                     template+=`
                     <button class="descender btn btn-secondary ml-1" type="button" data-toggle="modal" data-target="#confirmar">
                       <i class="fas fa-sort-amount-down mr-1"></i>Descender
@@ -891,11 +775,11 @@ $(document).ready(function(){
                     `;
                   }
                 }else{
-                  //usuario logueado no es root.
+                  //cliente logueado no es root.
                   //si es 1=>administrador, solo muestra boton borrar a tecnicos, no a administradores o root
-                  if(tipo_usuario==1 && usuario.tipo_usuario!=1 && usuario.tipo_usuario!=3){
+                  if(tipo_cliente==1 && cliente.tipo_cliente!=1 && cliente.tipo_cliente!=3){
                     template+=`
-                    <button class="borrar-usuario btn btn-danger  type="button" data-toggle="modal" data-target="#confirmar">
+                    <button class="borrar-cliente btn btn-danger  type="button" data-toggle="modal" data-target="#confirmar">
                       <i class="fas fa-window-close mr-1"></i>Eliminar
                   </button>
                     `;
@@ -908,7 +792,7 @@ $(document).ready(function(){
             </div>
                 `;
             });
-            $('#usuarios').html(template);
+            $('#clientes').html(template);
         });
     }
     $(document).on('keyup','#buscar',function(){
@@ -920,21 +804,21 @@ $(document).ready(function(){
         }
     });
 
-    $('#form-crear-usuario').submit(e=>{
+    $('#form-crear-cliente').submit(e=>{
       let nombre= $('#nombre').val();
       let apellidos= $('#apellidos').val();
       let edad= $('#edad').val();
       let dni= $('#dni').val();
       let pass= $('#pass').val();
-      funcion='crear_nuevo_usuario';
-      $.post('../controlador/usuarioController.php',{nombre, apellidos, edad, dni, pass, funcion},(response)=>{
+      funcion='crear_nuevo_cliente';
+      $.post('../controlador/clienteController.php',{nombre, apellidos, edad, dni, pass, funcion},(response)=>{
         if(response=='add'){
           //mostrar el alert de éxito
           $('#add').hide('slow');
           $('#add').show(1000);
           $('#add').hide(3000);
           //resetea los campos de la card
-          $('#form-crear-usuario').trigger('reset');
+          $('#form-crear-cliente').trigger('reset');
           buscar_datos();
         }else{
           //mostrar el alert de error
@@ -942,7 +826,7 @@ $(document).ready(function(){
           $('#noadd').show(1000);
           $('#noadd').hide(3000);
           //resetea los campos de la card
-          $('#form-crear-usuario').trigger('reset');
+          $('#form-crear-cliente').trigger('reset');
         }
       });
       //para prevenir la actualización por defecto de la página
@@ -950,10 +834,10 @@ $(document).ready(function(){
     });
 
     $(document).on('click', '.ascender',(e)=>{
-      //se quiere acceder al elemento usuarioid de la card y guardarlo en elemento, para ello hay que subir 4 veces desde donde está el boton ascender
+      //se quiere acceder al elemento clienteid de la card y guardarlo en elemento, para ello hay que subir 4 veces desde donde está el boton ascender
       const elemento=$(this)[0].activeElement.parentElement.parentElement.parentElement.parentElement;
       //console.log(elemento);
-      const id=$(elemento).attr('usuarioId');
+      const id=$(elemento).attr('clienteId');
       //console.log(id);
       funcion='ascender';
       $('#id_user').val(id);
@@ -961,32 +845,32 @@ $(document).ready(function(){
     });
 
     $(document).on('click', '.descender',(e)=>{
-      //se quiere acceder al elemento usuarioid de la card y guardarlo en elemento, para ello hay que subir 4 veces desde donde está el boton ascender
+      //se quiere acceder al elemento clienteid de la card y guardarlo en elemento, para ello hay que subir 4 veces desde donde está el boton ascender
       const elemento=$(this)[0].activeElement.parentElement.parentElement.parentElement.parentElement;
       //console.log(elemento);
-      const id=$(elemento).attr('usuarioId');
+      const id=$(elemento).attr('clienteId');
       //console.log(id);
       funcion='descender';
       $('#id_user').val(id);
       $('#funcion').val(funcion);
     });
 
-    $(document).on('click', '.borrar-usuario',(e)=>{
-      //se quiere acceder al elemento usuarioid de la card y guardarlo en elemento, para ello hay que subir 4 veces desde donde está el boton ascender
+    $(document).on('click', '.borrar-cliente',(e)=>{
+      //se quiere acceder al elemento clienteid de la card y guardarlo en elemento, para ello hay que subir 4 veces desde donde está el boton ascender
       const elemento=$(this)[0].activeElement.parentElement.parentElement.parentElement.parentElement;
       //console.log(elemento);
-      const id=$(elemento).attr('usuarioId');
+      const id=$(elemento).attr('clienteId');
       //console.log(id);
-      funcion='borrar_usuario';
+      funcion='borrar_cliente';
       $('#id_user').val(id);
       $('#funcion').val(funcion);
     });
 
     $('#form-confirmar').submit(e=>{
       let pass=$('#pass').val();
-      let id_usuario=$('#id_user').val();
+      let id_cliente=$('#id_user').val();
       funcion=$('#funcion').val();
-      $.post('../controlador/usuarioController.php', {pass, id_usuario, funcion}, (response)=>{
+      $.post('../controlador/clienteController.php', {pass, id_cliente, funcion}, (response)=>{
         if(response=='ascendido'|| response=='descendido'|| response=='borrado')
         {
           $('#confirmado').hide('slow');

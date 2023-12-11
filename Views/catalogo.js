@@ -496,7 +496,7 @@ $(document).ready(function(){
           </a>
         </li>
         <li id="gestion_cliente" class="nav-item">
-          <a href="adm_cliente.php" class="nav-link">
+          <a href="/farmacia-V2/Views/clientes.php" class="nav-link">
             <i class="nav-icon fas fa-user-friends"></i>
             <p>
               Gestión cliente
