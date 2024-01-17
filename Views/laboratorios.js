@@ -1,4 +1,5 @@
 $(document).ready(function(){
+  bsCustomFileInput.init();//para que en el input de editar aparezca el nombre del archivo
   loader();
   //setTimeout(verificar_sesion, 2000);
   verificar_sesion();
@@ -8,9 +9,9 @@ $(document).ready(function(){
     "preventDuplicates": true
   }
 
-  async function obtener_clientes(){
-    let funcion="obtener_clientes";
-    let data=await fetch('/farmacia-V2/Controllers/clienteController.php',{
+  async function obtener_laboratorios(){
+    let funcion="obtener_laboratorios";
+    let data=await fetch('/farmacia-V2/Controllers/laboratorioController.php',{
       method: 'POST',
       headers: {'Content-type': 'application/x-www-form-urlencoded'},
       body: 'funcion='+funcion
@@ -20,67 +21,48 @@ $(document).ready(function(){
       let response=await data.text();
       try{
         //se descodifica el json
-        let clientes=JSON.parse(response);
-        console.log(clientes);
-        $('#clientes').DataTable({
-          data: clientes,
+        let laboratorios=JSON.parse(response);
+        console.log(laboratorios);
+        $('#laboratorios').DataTable({
+          data: laboratorios,
           "aaSorting":[],
           "searching": true,
           "scrollX": true,
           "autoWidth": false,
           columns: [
-            //la variable datos es la variable clientes
+            //la variable datos es la variable laboratorios
             {"render": function(data, type, datos, meta){
               let template='';
-              template+=`
-              <div class="card bg-light">
-                <div class="h5 card-header text-muted border-bottom-0">`
+              template+=`<div class="card card-widget widget-user-2">
+              <div class="widget-user-header bg-success">
+                <div class="widget-user-image">
+                  <img class="img-circle elevation-2" src="/farmacia-V2/util/img/laboratorios/${datos.avatar}" alt="User Avatar">
+                </div>
+                <!-- /.widget-user-image -->
+                <h3 class="widget-user-username">${datos.nombre}</h3>`;
                 if(datos.estado=='A'){
-                  template+=`<span class="badge badge-success">Activo</span>`;
+                  template+=`<h5 class="widget-user-desc"><span class="badge badge-success">Activo</span></h5>`;
                 }else{
-                  template+=`<span class="badge badge-secondary">Inactivo</span>`;
+                  template+=`<h5 class="widget-user-desc"><span class="badge badge-secondary">Inctivo</span></h5>`;
                 }
               template+=`</div>
-                <div class="card-body pt-0">
-                  <div class="row">
-                    <div class="col-md-4">
-                      <h4 class=""><b>${datos.nombre} ${datos.apellidos}</b></h4>
-                      <ul class="ml-4 mb-0 fa-ul text-muted">
-                        <li class="h8"><span class="fa-li"><i class="fas fa-lg fa-angle-double-right"></i></span> DNI: ${datos.dni}</li>
-                        <li class="h8"><span class="fa-li"><i class="fas fa-lg fa-angle-double-right"></i></span> Edad: ${datos.edad}</li>
-                        <li class="h8"><span class="fa-li"><i class="fas fa-lg fa-angle-double-right"></i></span> Teléfono: ${datos.telefono}</li>
-                      </ul>
-                    </div>
-                    <div class="col-md-4">
-                      <ul class="ml-4 mb-0 fa-ul text-muted">
-                        <li class="h8"><span class="fa-li"><i class="fas fa-lg fa-angle-double-right"></i></span> Correo: ${datos.correo}</li>
-                        <li class="h8"><span class="fa-li"><i class="fas fa-lg fa-angle-double-right"></i></span> Sexo: ${datos.sexo}</li>
-                        <li class="h8"><span class="fa-li"><i class="fas fa-lg fa-angle-double-right"></i></span> Adicional: ${datos.adicional}</li>
-                      </ul>
-                    </div>
-                    <div class="col-md-4 text-center">
-                      <img src="/farmacia-V2/util/img/${datos.avatar}" alt="user-avatar" width="150px" class="img-circle img-fluid">
-                    </div>
-                  </div>
-                </div>
-                <div class="card-footer">
-                  <div class="text-right">`;
-                  if(datos.estado=='A'){
-                    template+=`<button id="${datos.id}" avatar="${datos.avatar}" nombre="${datos.nombre}" apellidos="${datos.apellidos}" class="eliminar_cliente btn bg-gradient-danger btn-circle btn-lg" title="Borrar">
-                      <i class="far fa-trash-alt mr-1"></i>
-                    </button>
-                    <button id="${datos.id}" avatar="${datos.avatar}" nombre="${datos.nombre}" apellidos="${datos.apellidos}" class="editar_cliente btn bg-gradient-success btn-circle btn-lg" title="Editar">
-                      <i class="fas fa-pencil-alt mr-1"></i>
-                    </button>`;
-                  }else if(datos.estado=='I'){
-                    template+=`<button id="${datos.id}" avatar="${datos.avatar}" nombre="${datos.nombre}" apellidos="${datos.apellidos}" funcion="reactivar_cliente" class="reactivar btn bg-gradient-primary btn-circle btn-lg" title="Reactivar">
-                      <i class="fas fa-plus mr-1"></i>
-                    </button>`;
-                  }
-                  template+=`
-                  </div>
-                </div>
-              </div>`
+              <div class="card-footer p-0">
+                <ul class="nav flex-column">
+                  <li class="nav-item">
+                    <a href="#" class="nav-link">`;
+                      if(datos.estado=='A'){
+                        template+=`<span><button id="${datos.id}" nombre="${datos.nombre}" avatar="${datos.avatar}" class="editar btn btn-primary btn-circle" data-toggle="modal" data-target="#editar_laboratorio"><i class="fas fa-pencil-alt" title="Editar"></i></button></span>
+                        <span><button id="${datos.id}" nombre="${datos.nombre}" avatar="${datos.avatar}" class="editar_avatar btn btn-info btn-circle " data-toggle="modal" data-target="#editar_avatar"><i class="fas fa-image" title="Cambiar avatar"></i></button></span>
+                        <span><button id="${datos.id}" nombre="${datos.nombre}" avatar="${datos.avatar}" class="eliminar_laboratorio btn btn-danger btn-circle" title="Eliminar"><i class="fas fa-trash"></i></button></span>
+                        `;
+                      }else{
+                        template+=`<span><button id="${datos.id}" nombre="${datos.nombre}" avatar="${datos.avatar}" class="btn btn-success btn-circle"><i class="activar_laboratorio fas fa-plus" title="Reactivar"></i></button></span>`;
+                      }
+                    template+=`</a>
+                  </li>
+                </ul>
+              </div>
+            </div>`;
             return template;
             }}
           ],
@@ -105,23 +87,21 @@ $(document).ready(function(){
     }
   }
 
-  $(document).on('click', '.confirmar', (e)=>{
+
+  $(document).on('click', '.editar', (e)=>{
     let elemento=$(this)[0].activeElement;
     let id=$(elemento).attr('id');
     let nombre=$(elemento).attr('nombre');
     let avatar=$(elemento).attr('avatar');
-    let apellidos=$(elemento).attr('apellidos');
-    let funcion=$(elemento).attr('funcion');
-    $('#nombre_confirmar').text(nombre);
-    $('#apellidos_confirmar').text(apellidos);
-    $('#funcion').val(funcion);
-    $('#id_user').val(id);
-    $('#avatar_confirmar').attr('src','/farmacia-V2/Util/img/user/'+avatar);
 
+    $('#id_laboratorio').val(id);
+    $('#nombre_card').text(nombre);
+    $('#nombre_edit').val(nombre);
+    $('#avatar_card').attr('src','/farmacia-V2/Util/img/laboratorios/'+avatar);
   });
 
-	async function crear_cliente(datos) {
-		let data = await fetch('/farmacia-V2/Controllers/clienteController.php', {
+  async function editar_laboratorio(datos) {
+		let data = await fetch('/farmacia-V2/Controllers/laboratorioController.php', {
 			method: 'POST',
 			body: datos
 		})
@@ -132,19 +112,30 @@ $(document).ready(function(){
 				//se descodifica el json
 				let respuesta = JSON.parse(response);
 				if(respuesta.mensaje=='success'){
-					toastr.success('Cliente creado.', 'Éxito');
-					obtener_clientes();
-					$('#crear_cliente').modal('hide');
-          $('#form-crear_cliente').trigger('reset');
+					toastr.success('Laboratorio editado.', 'Éxito');
+					obtener_laboratorios();
+					$('#editar_laboratorio').modal('hide');
+          $('#form-editar_laboratorio').trigger('reset');
 				}else{
-					if(respuesta.mensaje=='error_cliente'){
+					if(respuesta.mensaje=='error_laboratorio'){
 						Swal.fire({
 							position: 'center',
 							icon: 'error',
-							title: 'Ya existe el cliente.',
-              text: 'El cliente ya está registrado en el sistema.'
+							title: 'Ya existe el laboratorio.',
+              text: 'El laboratorio ya está registrado en el sistema.'
 						});
-            $('#crear_cliente').modal('hide');
+            $('#form-editar_laboratorio').trigger('reset');
+					}
+          if(respuesta.mensaje=='error_decrypt'){
+						Swal.fire({
+							position: 'center',
+							icon: 'error',
+							title: 'Datos vulnerados.',
+              showConfirmButton:false,
+              timer:1000
+						}).then(function(){
+              location.reload();
+            });
 					}
 					if(respuesta.mensaje=='error_session'){
 						Swal.fire({
@@ -178,95 +169,24 @@ $(document).ready(function(){
 
   $.validator.setDefaults({
     submitHandler: function () {
-      let datos=new FormData($('#form-crear_cliente')[0]);
-			let funcion = "crear_cliente";
+      let datos=new FormData($('#form-editar_laboratorio')[0]);
+			let funcion = "editar_laboratorio";
 			datos.append('funcion', funcion);
-			crear_cliente(datos);
+      editar_laboratorio(datos);
     }
   });
 
-  /*jQuery.validator.addMethod("no_numbers", function(value){
-    //se eliminan los espacios en blanco reemplazandolos con valor vacío
-    let campo=value.replace(/ /g,"");
-    //comprueba que campo esté formado por letras mayus o minus
-    let estado=/^[A-Za-z]+$/.test(campo);
-    return estado;
-  },"*No se permiten números.");*/
-  //no hace falta incluir el mensaje no_numbers, ya aparece en el addMethod anterior
-  $('#form-crear_cliente').validate({
+  $('#form-editar_laboratorio').validate({
     rules: {
-      nombre: {
+      nombre_edit: {
         required: true,
 				minlength: 3
-      },
-      apellidos: {
-        required: true,
-				minlength: 3
-      },
-      nacimiento: {
-        required: true
-      },
-      dni: {
-        required: true,
-        number: true,
-				minlength: 8,
-				maxlength: 8
-      },
-      telefono: {
-        required: true,
-        number: true,
-				minlength: 9,
-				maxlength: 9
-      },
-      correo: {
-        required: true,
-        email: true,
-      },
-      sexo: {
-        required: true
-      },
-			adicional: {
-        required: true,
-				minlength: 2,
-				maxlength: 100
       },
     },
     messages: {
-      nombre: {
+      nombre_edit: {
         required: "Es necesario introducir un nombre.",
 				minlength: "Debe contener 3 caracteres como mínimo."
-      },
-      apellidos: {
-        required: "Es necesario introducir apellidos.",
-				minlength: "Debe contener 3 caracteres como mínimo."
-      },
-      nacimiento: {
-        required: "Se necesita una fecha de nacimiento.",
-				minlength: "Debe contener 3 caracteres como mínimo."
-      },
-      dni: {
-        required: "Introduce un dni válido",
-        number: "Debe contener números",
-				minlength: "Debe contener 8 caracteres.",
-				maxlength: "Debe contener 8 caracteres."
-      },
-      telefono: {
-        required: "Introduce un número de teléfono",
-        number: "Debe contener números",
-				minlength: "Debe contener 9 caracteres.",
-				maxlength: "Debe contener 9 caracteres."
-      },
-      correo: {
-        required: "Introduce una dirección de correo.",
-        email: "Introduce una dirección de correo válida."
-      },
-      sexo: {
-        required: "Dato requerido"
-      },
-			adicional: {
-        required: "Dato requerido",
-				minlength: "Debe contener 2 caracteres mínimo.",
-				maxlength: "Debe contener 100 caracteres máximo."
       },
     },
     errorElement: 'span',
@@ -284,7 +204,416 @@ $(document).ready(function(){
     }
   });
 
-  function cargar_menu_superior(cliente) {
+
+  $(document).on('click', '.editar_avatar', (e)=>{
+    let elemento=$(this)[0].activeElement;
+    let id=$(elemento).attr('id');
+    let nombre=$(elemento).attr('nombre');
+    let avatar=$(elemento).attr('avatar');
+
+    $('#id_laboratorio_avatar').val(id);
+    $('#nombre_avatar').text(nombre);
+    $('#avatar').attr('src','/farmacia-V2/Util/img/laboratorios/'+avatar);
+  });
+
+  async function editar_avatar(datos) {
+		let data = await fetch('/farmacia-V2/Controllers/laboratorioController.php', {
+			method: 'POST',
+			body: datos
+		})
+		if (data.ok) {
+			//mejor usar data.text que data.json, pues si hay error, este se añade como cadena de texto a los datos
+			let response = await data.text();
+			try {
+				//se descodifica el json
+				let respuesta = JSON.parse(response);
+				if(respuesta.mensaje=='success'){
+					toastr.success('Avatar de laboratorio editado.', 'Éxito');
+					obtener_laboratorios();
+					$('#editar_avatar').modal('hide');
+          $('#form-editar_avatar').trigger('reset');
+				}else{
+          if(respuesta.mensaje=='error_decrypt'){
+						Swal.fire({
+							position: 'center',
+							icon: 'error',
+							title: 'Datos vulnerados.',
+              showConfirmButton:false,
+              timer:1000
+						}).then(function(){
+              location.reload();
+            });
+					}
+					if(respuesta.mensaje=='error_session'){
+						Swal.fire({
+							position: 'center',
+							icon: 'error',
+							title: 'Sesión finalizada',
+							showConfirmButton: true,
+							timer: 1000,
+						}).then(function(){
+							location.href("/farmacia-V2/index.php");
+						});
+					}
+				}
+			} catch (error) {
+				console.error(error);
+				console.log(response);
+				Swal.fire({
+					icon: 'error',
+					title: 'Error',
+					text: 'Hubo conflicto en el sistema, póngase en contacto con el administrador.'
+				})
+			}
+		} else {
+			Swal.fire({
+				icon: 'error',
+				title: data.statusText,
+				text: 'Hubo conflicto de código: ' + data.status
+			})
+		}
+	}
+
+  $.validator.setDefaults({
+    submitHandler: function () {
+      let datos=new FormData($('#form-editar_avatar')[0]);
+			let funcion = "editar_avatar";
+			datos.append('funcion', funcion);
+      editar_avatar(datos);
+    }
+  });
+
+  $('#form-editar_avatar').validate({
+    rules: {
+      avatar_edit: {
+        required: true,
+        extension: 'png|jpg|jpeg|webp'
+      },
+    },
+    messages: {
+      avatar_edit: {
+        required: "Es necesario introducir un nombre.",
+				extension: "El formato debe ser png|jpg|jpeg|webp."
+      },
+    },
+    errorElement: 'span',
+    errorPlacement: function (error, element) {
+      error.addClass('invalid-feedback');
+      element.closest('.form-group').append(error);
+    },
+    highlight: function (element, errorClass, validClass) {
+      $(element).addClass('is-invalid');
+			$(element).removeClass('is-valid');
+    },
+    unhighlight: function (element, errorClass, validClass) {
+      $(element).removeClass('is-invalid');
+			$(element).addClass('is-valid');
+    }
+  });
+
+
+	async function crear_laboratorio(datos) {
+		let data = await fetch('/farmacia-V2/Controllers/laboratorioController.php', {
+			method: 'POST',
+			body: datos
+		})
+		if (data.ok) {
+			//mejor usar data.text que data.json, pues si hay error, este se añade como cadena de texto a los datos
+			let response = await data.text();
+			try {
+				//se descodifica el json
+				let respuesta = JSON.parse(response);
+				if(respuesta.mensaje=='success'){
+					toastr.success('Laboratorio creado.', 'Éxito');
+					obtener_laboratorios();
+					$('#crear_laboratorio').modal('hide');
+          $('#form-crear_laboratorio').trigger('reset');
+				}else{
+					if(respuesta.mensaje=='error_laboratorio'){
+						Swal.fire({
+							position: 'center',
+							icon: 'error',
+							title: 'Ya existe el laboratorio.',
+              text: 'El laboratorio ya está registrado en el sistema.'
+						});
+            $('#form-crear_laboratorio').trigger('reset');
+					}
+					if(respuesta.mensaje=='error_session'){
+						Swal.fire({
+							position: 'center',
+							icon: 'error',
+							title: 'Sesión finalizada',
+							showConfirmButton: true,
+							timer: 1000,
+						}).then(function(){
+							location.href("/farmacia-V2/index.php");
+						});
+					}
+				}
+			} catch (error) {
+				console.error(error);
+				console.log(response);
+				Swal.fire({
+					icon: 'error',
+					title: 'Error',
+					text: 'Hubo conflicto en el sistema, póngase en contacto con el administrador.'
+				})
+			}
+		} else {
+			Swal.fire({
+				icon: 'error',
+				title: data.statusText,
+				text: 'Hubo conflicto de código: ' + data.status
+			})
+		}
+	}
+
+  $.validator.setDefaults({
+    submitHandler: function () {
+      let datos=new FormData($('#form-crear_laboratorio')[0]);
+			let funcion = "crear_laboratorio";
+			datos.append('funcion', funcion);
+      crear_laboratorio(datos);
+    }
+  });
+
+  $('#form-crear_laboratorio').validate({
+    rules: {
+      nombre: {
+        required: true,
+				minlength: 3
+      },
+    },
+    messages: {
+      nombre: {
+        required: "Es necesario introducir un nombre.",
+				minlength: "Debe contener 3 caracteres como mínimo."
+      },
+    },
+    errorElement: 'span',
+    errorPlacement: function (error, element) {
+      error.addClass('invalid-feedback');
+      element.closest('.form-group').append(error);
+    },
+    highlight: function (element, errorClass, validClass) {
+      $(element).addClass('is-invalid');
+			$(element).removeClass('is-valid');
+    },
+    unhighlight: function (element, errorClass, validClass) {
+      $(element).removeClass('is-invalid');
+			$(element).addClass('is-valid');
+    }
+  });
+
+
+  $(document).on('click', '.eliminar_laboratorio', (e)=>{
+    let elemento=$(this)[0].activeElement;
+    let id=$(elemento).attr('id');
+    let nombre=$(elemento).attr('nombre');
+    let avatar=$(elemento).attr('avatar');
+
+    const swalWithBootstrapButtons = Swal.mixin({
+      customClass: {
+        confirmButton: "btn btn-success ml-2",
+        cancelButton: "btn btn-danger"
+      },
+      buttonsStyling: false
+    });
+    swalWithBootstrapButtons.fire({
+      title: '¿Eliminar laboratorio'+nombre+'?',
+      imageUrl:'/farmacia-V2/Util/img/laboratorios/'+avatar,
+      imageWidth:200,
+      imageHeight:200,
+      showCancelButton: true,
+      confirmButtonText: "Eliminar",
+      cancelButtonText: "Cancelar",
+      reverseButtons: true
+    }).then((result) => {
+      if (result.isConfirmed) {
+        eliminar_laboratorio(id).then(respuesta=>{
+          if(respuesta.mensaje=='success'){
+            swalWithBootstrapButtons.fire({
+              title: "Eliminación realizada",
+              text: 'El laboratorio '+nombre+' fue eliminado',
+              icon: "success"
+            });
+            obtener_laboratorios();
+          }else{
+            if(respuesta.mensaje=='error_decrypt'){
+              Swal.fire({
+                position: 'center',
+                icon: 'error',
+                title: 'Datos vulnerados.',
+                showConfirmButton:false,
+                timer:1000
+              }).then(function(){
+                location.reload();
+              });
+            }
+            if(respuesta.mensaje=='error_session'){
+              Swal.fire({
+                position: 'center',
+                icon: 'error',
+                title: 'Sesión finalizada',
+                showConfirmButton: true,
+                timer: 1000,
+              }).then(function(){
+                location.href("/farmacia-V2/index.php");
+              });
+            }
+          }
+        })
+      } else if (
+        /* Read more about handling dismissals below */
+        result.dismiss === Swal.DismissReason.cancel
+      ) {
+        swalWithBootstrapButtons.fire({
+          title: "Operación cancelada",
+          text: "No se eliminó el laboratorio",
+          icon: "error"
+        });
+      }
+
+    });
+  });
+
+  async function eliminar_laboratorio(id) {
+    let funcion="eliminar_laboratorio";
+    let respuesta='';
+		let data = await fetch('/farmacia-V2/Controllers/laboratorioController.php', {
+			method: 'POST',      
+      headers: {'Content-type': 'application/x-www-form-urlencoded'},
+			body: 'funcion='+funcion+'&&id='+id
+		})
+		if (data.ok) {
+			//mejor usar data.text que data.json, pues si hay error, este se añade como cadena de texto a los datos
+			let response = await data.text();
+			try {
+				respuesta = JSON.parse(response);//se descodifica el json
+			} catch (error) {
+				console.error(error);
+				console.log(response);
+				Swal.fire({
+					icon: 'error',
+					title: 'Error',
+					text: 'Hubo conflicto en el sistema, póngase en contacto con el administrador.'
+				})
+			}
+		} else {
+			Swal.fire({
+				icon: 'error',
+				title: data.statusText,
+				text: 'Hubo conflicto de código: ' + data.status
+			})
+		}
+    return respuesta;
+	}
+
+  $(document).on('click', '.activar_laboratorio', (e)=>{
+    let elemento=$(this)[0].activeElement;
+    let id=$(elemento).attr('id');
+    let nombre=$(elemento).attr('nombre');
+    let avatar=$(elemento).attr('avatar');
+
+    const swalWithBootstrapButtons = Swal.mixin({
+      customClass: {
+        confirmButton: "btn btn-success ml-2",
+        cancelButton: "btn btn-danger"
+      },
+      buttonsStyling: false
+    });
+    swalWithBootstrapButtons.fire({
+      title: 'Reactivar laboratorio'+nombre+'?',
+      imageUrl:'/farmacia-V2/Util/img/laboratorios/'+avatar,
+      imageWidth:200,
+      imageHeight:200,
+      showCancelButton: true,
+      confirmButtonText: "Reactivar",
+      cancelButtonText: "Cancelar",
+      reverseButtons: true
+    }).then((result) => {
+      if (result.isConfirmed) {
+        reactivar_laboratorio(id).then(respuesta=>{
+          if(respuesta.mensaje=='success'){
+            swalWithBootstrapButtons.fire({
+              title: "Reactivación realizada",
+              text: 'El laboratorio '+nombre+' fue reactivado',
+              icon: "success"
+            });
+            obtener_laboratorios();
+          }else{
+            if(respuesta.mensaje=='error_decrypt'){
+              Swal.fire({
+                position: 'center',
+                icon: 'error',
+                title: 'Datos vulnerados.',
+                showConfirmButton:false,
+                timer:1000
+              }).then(function(){
+                location.reload();
+              });
+            }
+            if(respuesta.mensaje=='error_session'){
+              Swal.fire({
+                position: 'center',
+                icon: 'error',
+                title: 'Sesión finalizada',
+                showConfirmButton: true,
+                timer: 1000,
+              }).then(function(){
+                location.href("/farmacia-V2/index.php");
+              });
+            }
+          }
+        })
+      } else if (
+        /* Read more about handling dismissals below */
+        result.dismiss === Swal.DismissReason.cancel
+      ) {
+        swalWithBootstrapButtons.fire({
+          title: "Operación cancelada",
+          text: "No se reactivó el laboratorio",
+          icon: "error"
+        });
+      }
+
+    });
+  });
+
+  async function reactivar_laboratorio(id) {
+    let funcion="reactivar_laboratorio";
+    let respuesta='';
+		let data = await fetch('/farmacia-V2/Controllers/laboratorioController.php', {
+			method: 'POST',      
+      headers: {'Content-type': 'application/x-www-form-urlencoded'},
+			body: 'funcion='+funcion+'&&id='+id
+		})
+		if (data.ok) {
+			//mejor usar data.text que data.json, pues si hay error, este se añade como cadena de texto a los datos
+			let response = await data.text();
+			try {
+				respuesta = JSON.parse(response);//se descodifica el json
+			} catch (error) {
+				console.error(error);
+				console.log(response);
+				Swal.fire({
+					icon: 'error',
+					title: 'Error',
+					text: 'Hubo conflicto en el sistema, póngase en contacto con el administrador.'
+				})
+			}
+		} else {
+			Swal.fire({
+				icon: 'error',
+				title: data.statusText,
+				text: 'Hubo conflicto de código: ' + data.status
+			})
+		}
+    return respuesta;
+	}
+
+
+  function cargar_menu_superior(laboratorio) {
     let template=`
     <!-- Left navbar links -->
     <ul class="navbar-nav">
@@ -391,11 +720,11 @@ $(document).ready(function(){
           <a href="#" class="dropdown-item dropdown-footer">See All Notifications</a>
         </div>
       </li>
-      <!-- información de cliente -->
+      <!-- información de laboratorio -->
       <li class="nav-item dropdown">
         <a class="nav-link" data-toggle="dropdown" href="#">
-        <img src="/farmacia-V2/util/img/user/${cliente.avatar}" width="30" height="30" alt="Farmacia Logo">
-          <span>${cliente.nombre+' '+cliente.apellidos}</span>
+        <img src="/farmacia-V2/util/img/user/${laboratorio.avatar}" width="30" height="30" alt="Farmacia Logo">
+          <span>${laboratorio.nombre+' '+laboratorio.apellidos}</span>
         </a>
         <ul class="dropdown-menu">
           <li>
@@ -407,15 +736,15 @@ $(document).ready(function(){
     $('#menu_superior').html(template);
   }
 
-  function cargar_menu_lateral(cliente) {
+  function cargar_menu_lateral(laboratorio) {
     let template=`
     <!-- Sidebar user (optional) -->
     <div class="user-panel mt-3 pb-3 mb-3 d-flex">
       <div class="image">
-        <img src="/farmacia-V2/util/img/user/${cliente.avatar}" class="img-circle elevation-2" alt="User Image">
+        <img src="/farmacia-V2/util/img/user/${laboratorio.avatar}" class="img-circle elevation-2" alt="User Image">
       </div>
       <div class="info">
-        <a href="#" class="d-block">${cliente.nombre+' '+cliente.apellidos}</a>
+        <a href="#" class="d-block">${laboratorio.nombre+' '+laboratorio.apellidos}</a>
       </div>
     </div>
 
@@ -424,7 +753,7 @@ $(document).ready(function(){
       <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
         <!-- Add icons to the links using the .nav-icon class
             with font-awesome or any other icon font library -->
-        <li class="nav-header">Cliente</li>
+        <li class="nav-header">Laboratorio</li>
         <li class="nav-item">
           <a href="/farmacia-V2/Views/perfil.php" class="nav-link">
             <i class="nav-icon fas fa-user-cog"></i>
@@ -433,7 +762,7 @@ $(document).ready(function(){
             </p>
           </a>
         </li>
-        <li id="gestion_cliente" class="nav-item">
+        <li id="gestion_laboratorio" class="nav-item">
           <a href="/farmacia-V2/Views/usuarios.php" class="nav-link">
             <i class="nav-icon fas fa-users"></i>
             <p>
@@ -441,11 +770,11 @@ $(document).ready(function(){
             </p>
           </a>
         </li>
-        <li id="gestion_cliente" class="nav-item">
-          <a href="/farmacia-V2/Views/clientes.php" class="nav-link">
+        <li id="gestion_laboratorio" class="nav-item">
+          <a href="/farmacia-V2/Views/laboratorios.php" class="nav-link">
             <i class="nav-icon fas fa-user-friends"></i>
             <p>
-              Gestión cliente
+              Gestión laboratorio
             </p>
           </a>
         </li>
@@ -536,11 +865,11 @@ $(document).ready(function(){
       let response=await data.text();
       try{
         //se descodifica el json
-        let cliente=JSON.parse(response);
-        if(cliente.length!=0&&cliente.id_tipo!=3){
-          cargar_menu_superior(cliente);
-          cargar_menu_lateral(cliente);
-          obtener_clientes();
+        let laboratorio=JSON.parse(response);
+        if(laboratorio.length!=0&&laboratorio.id_tipo!=3){
+          cargar_menu_superior(laboratorio);
+          cargar_menu_lateral(laboratorio);
+          obtener_laboratorios();
           closeLoader();
         }else{
           location.href="/farmacia-V2/";
@@ -564,7 +893,7 @@ $(document).ready(function(){
   }
 
   async function confirmar(datos) {
-		let data = await fetch('/farmacia-V2/Controllers/clienteController.php', {
+		let data = await fetch('/farmacia-V2/Controllers/laboratorioController.php', {
 			method: 'POST',
 			body: datos
 		})
@@ -575,39 +904,39 @@ $(document).ready(function(){
 				//se descodifica el json
 				let respuesta = JSON.parse(response);
 				if(respuesta.mensaje=='success'){
-          if(respuesta.funcion=="eliminar cliente"){
-            toastr.success('Cliente eliminado.', 'Éxito');
-            obtener_clientes();
+          if(respuesta.funcion=="eliminar laboratorio"){
+            toastr.success('Laboratorio eliminado.', 'Éxito');
+            obtener_laboratorios();
             $('#confirmar').modal('hide');
             $('#form-confirmar').trigger('reset');
           }
-          else if(respuesta.funcion=="reactivar cliente"){
-            toastr.success('Cliente reactivado.', 'Éxito');
-            obtener_clientes();
+          else if(respuesta.funcion=="reactivar laboratorio"){
+            toastr.success('Laboratorio reactivado.', 'Éxito');
+            obtener_laboratorios();
             $('#confirmar').modal('hide');
             $('#form-confirmar').trigger('reset');
           }
-          else if(respuesta.funcion=="ascender cliente"){
-            toastr.success('Cliente ascendido.', 'Éxito');
-            obtener_clientes();
+          else if(respuesta.funcion=="ascender laboratorio"){
+            toastr.success('Laboratorio ascendido.', 'Éxito');
+            obtener_laboratorios();
             $('#confirmar').modal('hide');
             $('#form-confirmar').trigger('reset');
           }
-          else if(respuesta.funcion=="descender cliente"){
-            toastr.success('Cliente descendido.', 'Éxito');
-            obtener_clientes();
+          else if(respuesta.funcion=="descender laboratorio"){
+            toastr.success('Laboratorio descendido.', 'Éxito');
+            obtener_laboratorios();
             $('#confirmar').modal('hide');
             $('#form-confirmar').trigger('reset');
           }
 				}else{
-					if(respuesta.mensaje=='error_cliente'){
+					if(respuesta.mensaje=='error_laboratorio'){
 						Swal.fire({
 							position: 'center',
 							icon: 'error',
-							title: 'Ya existe el cliente.',
-              text: 'El cliente ya está registrado en el sistema.'
+							title: 'Ya existe el laboratorio.',
+              text: 'El laboratorio ya está registrado en el sistema.'
 						});
-            $('#crear_cliente').modal('hide');
+            $('#crear_laboratorio').modal('hide');
             $('#residencia').val('').trigger('change');
 					}
           if(respuesta.mensaje=='error_decrypt'){
@@ -711,196 +1040,6 @@ $(document).ready(function(){
       })
     }
   }
-/*    var tipo_cliente= $('#tipo_cliente').val();
-    //si el tipo de cliente==2, tecnico, no se muestra boton de crear cliente
-    if(tipo_cliente==2){
-      $('#button-crear-cliente').hide();
-    }
-    buscar_datos();
-    var funcion;
-    function buscar_datos(consulta) {
-        funcion='buscar_clientes_adm';
-        $.post('../controlador/clienteController.php', {consulta, funcion},(response)=>{
-            const clientes= JSON.parse(response);
-            let template='';
-            console.log(tipo_cliente);
-            clientes.forEach(cliente => {
-                template+=`
-                <div clienteId="${cliente.id}"class="col-12 col-sm6 col-md-4 d-flex align-items-stretch flex-column">
-              <div class="card bg-light d-flex flex-fill">
-              <div class="card-header text-muted border-bottom-0">`;
-                if(cliente.tipo_cliente==3){
-                  template+=`<h1 class="badge badge-danger">${cliente.tipo}</h1>`;
-                }
-                if(cliente.tipo_cliente==2){
-                  template+=`<h1 class="badge badge-warning">${cliente.tipo}</h1>`;
-                }
-                if(cliente.tipo_cliente==1){
-                  template+=`<h1 class="badge badge-info">${cliente.tipo}</h1>`;
-                }
-                template+=`
-              </div>
-              <div class="card-body pt-0">
-                <div class="row">
-                  <div class="col-7">
-                    <h2 class="lead"><b>${cliente.nombre} ${cliente.apellidos}</b></h2>
-                    <p class="text-muted text-sm"><b>Sobre mí: </b> ${cliente.adicional} </p>
-                    <ul class="ml-4 mb-0 fa-ul text-muted">
-                    <li class="small"><span class="fa-li"><i class="fas fa-lg fa-id-card"></i></span> DNI: + ${cliente.dni}</li>
-                    <li class="small"><span class="fa-li"><i class="fas fa-lg fa-birthday-cake"></i></span> Edad #: + ${cliente.edad}</li>
-                      <li class="small"><span class="fa-li"><i class="fas fa-lg fa-building"></i></span> Residencia: ${cliente.residencia}</li>
-                      <li class="small"><span class="fa-li"><i class="fas fa-lg fa-phone"></i></span> Teléfono #: + ${cliente.telefono}</li>
-                      <li class="small"><span class="fa-li"><i class="fas fa-lg fa-at"></i></span> Correo #: + ${cliente.correo}</li>
-                      <li class="small"><span class="fa-li"><i class="fas fa-lg fa-smile-wink"></i></span> Sexo #: + ${cliente.sexo}</li>
-                    </ul>
-                  </div>
-                  <div class="col-5 text-center">
-                    <img src="${cliente.avatar}" alt="user-avatar" class="img-circle img-fluid">
-                  </div>
-                </div>
-              </div>
-              <div class="card-footer">
-                <div class="text-right">`;
-                //comprobar si cliente logueado es root
-                if(tipo_cliente==3){
-                  //si es root, puede eliminar a todos menos a root
-                  if(cliente.tipo_cliente!=3){
-                    template+=`
-                    <button class="borrar-cliente btn btn-danger mr-1  type="button" data-toggle="modal" data-target="#confirmar">
-                      <i class="fas fa-window-close mr-1"></i>Eliminar
-                  </button>
-                    `;
-                  }
-                  //si el cliente es un técnico, root puede ascenderlo
-                  if(cliente.tipo_cliente==2){
-                    template+=`
-                    <button class="ascender btn btn-primary ml-1" type="button" data-toggle="modal" data-target="#confirmar">
-                      <i class="fas fa-sort-amount-up mr-1"></i>Ascender
-                  </button>
-                    `;
-                  }
-                  if(cliente.tipo_cliente==1){
-                    template+=`
-                    <button class="descender btn btn-secondary ml-1" type="button" data-toggle="modal" data-target="#confirmar">
-                      <i class="fas fa-sort-amount-down mr-1"></i>Descender
-                  </button>
-                    `;
-                  }
-                }else{
-                  //cliente logueado no es root.
-                  //si es 1=>administrador, solo muestra boton borrar a tecnicos, no a administradores o root
-                  if(tipo_cliente==1 && cliente.tipo_cliente!=1 && cliente.tipo_cliente!=3){
-                    template+=`
-                    <button class="borrar-cliente btn btn-danger  type="button" data-toggle="modal" data-target="#confirmar">
-                      <i class="fas fa-window-close mr-1"></i>Eliminar
-                  </button>
-                    `;
-                  }
-                }
-                 template+=`
-                </div>
-              </div>
-            </div>
-            </div>
-                `;
-            });
-            $('#clientes').html(template);
-        });
-    }
-    $(document).on('keyup','#buscar',function(){
-        let valor = $(this).val();
-        if(valor!=""){
-            buscar_datos(valor);
-        }else{
-            buscar_datos();
-        }
-    });
-
-    $('#form-crear-cliente').submit(e=>{
-      let nombre= $('#nombre').val();
-      let apellidos= $('#apellidos').val();
-      let edad= $('#edad').val();
-      let dni= $('#dni').val();
-      let pass= $('#pass').val();
-      funcion='crear_nuevo_cliente';
-      $.post('../controlador/clienteController.php',{nombre, apellidos, edad, dni, pass, funcion},(response)=>{
-        if(response=='add'){
-          //mostrar el alert de éxito
-          $('#add').hide('slow');
-          $('#add').show(1000);
-          $('#add').hide(3000);
-          //resetea los campos de la card
-          $('#form-crear-cliente').trigger('reset');
-          buscar_datos();
-        }else{
-          //mostrar el alert de error
-          $('#noadd').hide('slow');
-          $('#noadd').show(1000);
-          $('#noadd').hide(3000);
-          //resetea los campos de la card
-          $('#form-crear-cliente').trigger('reset');
-        }
-      });
-      //para prevenir la actualización por defecto de la página
-      e.preventDefault();
-    });
-
-    $(document).on('click', '.ascender',(e)=>{
-      //se quiere acceder al elemento clienteid de la card y guardarlo en elemento, para ello hay que subir 4 veces desde donde está el boton ascender
-      const elemento=$(this)[0].activeElement.parentElement.parentElement.parentElement.parentElement;
-      //console.log(elemento);
-      const id=$(elemento).attr('clienteId');
-      //console.log(id);
-      funcion='ascender';
-      $('#id_user').val(id);
-      $('#funcion').val(funcion);
-    });
-
-    $(document).on('click', '.descender',(e)=>{
-      //se quiere acceder al elemento clienteid de la card y guardarlo en elemento, para ello hay que subir 4 veces desde donde está el boton ascender
-      const elemento=$(this)[0].activeElement.parentElement.parentElement.parentElement.parentElement;
-      //console.log(elemento);
-      const id=$(elemento).attr('clienteId');
-      //console.log(id);
-      funcion='descender';
-      $('#id_user').val(id);
-      $('#funcion').val(funcion);
-    });
-
-    $(document).on('click', '.borrar-cliente',(e)=>{
-      //se quiere acceder al elemento clienteid de la card y guardarlo en elemento, para ello hay que subir 4 veces desde donde está el boton ascender
-      const elemento=$(this)[0].activeElement.parentElement.parentElement.parentElement.parentElement;
-      //console.log(elemento);
-      const id=$(elemento).attr('clienteId');
-      //console.log(id);
-      funcion='borrar_cliente';
-      $('#id_user').val(id);
-      $('#funcion').val(funcion);
-    });
-
-    $('#form-confirmar').submit(e=>{
-      let pass=$('#pass').val();
-      let id_cliente=$('#id_user').val();
-      funcion=$('#funcion').val();
-      $.post('../controlador/clienteController.php', {pass, id_cliente, funcion}, (response)=>{
-        if(response=='ascendido'|| response=='descendido'|| response=='borrado')
-        {
-          $('#confirmado').hide('slow');
-          $('#confirmado').show(1000);
-          $('#confirmado').hide(3000);
-          //resetea los campos de la card
-          $('#form-confirmar').trigger('reset');
-          buscar_datos();
-        }else{
-          $('#rechazado').hide('slow');
-          $('#rechazado').show(1000);
-          $('#rechazado').hide(3000);
-          //resetea los campos de la card
-          $('#form-confirmar').trigger('reset');
-        }
-      });
-      e.preventDefault();
-    });*/
 })
 
 let espannol={
